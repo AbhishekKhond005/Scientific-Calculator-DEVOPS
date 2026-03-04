@@ -1,0 +1,18 @@
+- hosts: localhost
+  become: true
+
+  tasks:
+
+    - name: Pull latest Docker image
+      command: docker pull abhishekkhond/scientific-calculator
+
+    - name: Stop existing container
+      command: docker stop scientific-calculator
+      ignore_errors: yes
+
+    - name: Remove old container
+      command: docker rm scientific-calculator
+      ignore_errors: yes
+
+    - name: Run new container
+      command: docker run -d -p 8081:8080 --name scientific-calculator abhishekkhond/scientific-calculator
