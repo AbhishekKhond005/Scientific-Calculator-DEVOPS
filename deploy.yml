@@ -1,17 +1,21 @@
 - hosts: localhost
 
   tasks:
-
     - name: Pull latest Docker image
       command: docker pull abhishekkhond/scientific-calculator
 
-    - name: Stop existing container
+    - name: Stop existing container (if any)
       command: docker stop scientific-calculator
       ignore_errors: yes
 
-    - name: Remove old container
+    - name: Remove old container (if any)
       command: docker rm scientific-calculator
       ignore_errors: yes
 
-    - name: Run new container
-      command: docker run -d -p 8081:8080 --name scientific-calculator abhishekkhond/scientific-calculator
+    - name: Confirm image is ready
+      command: docker image inspect abhishekkhond/scientific-calculator
+      register: image_info
+
+    - name: Print usage instructions
+      debug:
+        msg: "Image is ready. Run the calculator with: docker run -it abhishekkhond/scientific-calculator"
