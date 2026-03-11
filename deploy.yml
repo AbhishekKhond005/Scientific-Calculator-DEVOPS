@@ -14,7 +14,7 @@
       ignore_errors: yes
 
     - name: Run new container
-      command: docker run -itd --name scientific-calculator abhishekkhond/scientific-calculator
+      command: docker run -d --name scientific-calculator abhishekkhond/scientific-calculator
 
     - name: Show running containers
       command: docker ps
