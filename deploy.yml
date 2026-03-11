@@ -1,10 +1,11 @@
 - hosts: localhost
+  become: yes
 
   tasks:
     - name: Pull latest Docker image
       command: docker pull abhishekkhond/scientific-calculator
 
-    - name: Stop existing container (if any)
+    - name: Stop existing container (if running)
       command: docker stop scientific-calculator
       ignore_errors: yes
 
@@ -12,10 +13,13 @@
       command: docker rm scientific-calculator
       ignore_errors: yes
 
-    - name: Confirm image is ready
-      command: docker image inspect abhishekkhond/scientific-calculator
-      register: image_info
+    - name: Run new container
+      command: docker run -itd --name scientific-calculator abhishekkhond/scientific-calculator
 
-    - name: Print usage instructions
+    - name: Show running containers
+      command: docker ps
+      register: container_output
+
+    - name: Print container status
       debug:
-        msg: "Image is ready. Run the calculator with: docker run -it abhishekkhond/scientific-calculator"
+        var: container_output.stdout
