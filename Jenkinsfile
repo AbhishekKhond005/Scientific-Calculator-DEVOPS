@@ -32,7 +32,8 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE} ."
+                sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
+                sh "docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest"
             }
         }
 
@@ -44,15 +45,19 @@ pipeline {
                     passwordVariable: 'PASS'
                 )]) {
 
-                    sh 'docker login -u $USER -p $PASS'
-                    sh "docker push ${DOCKER_IMAGE}"
+                    sh '''
+                    echo $PASS | docker login -u $USER --password-stdin
+                    docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    docker push ${DOCKER_IMAGE}:latest
+                    docker logout
+                    '''
                 }
             }
         }
 
         stage('Deploy with Ansible') {
             steps {
-                sh 'ansible-playbook deploy.yml'
+                sh 'ansible-playbook -i localhost, deploy.yml'
             }
         }
 
@@ -63,7 +68,12 @@ pipeline {
         success {
             emailext(
                 subject: "SUCCESS: Build ${env.BUILD_NUMBER}",
-                body: "Pipeline executed successfully.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}",
+                body: """Pipeline executed successfully.
+
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+Docker Image: ${DOCKER_IMAGE}:${BUILD_NUMBER}
+""",
                 to: "${EMAIL}"
             )
         }
@@ -71,10 +81,15 @@ pipeline {
         failure {
             emailext(
                 subject: "FAILED: Build ${env.BUILD_NUMBER}",
-                body: "Pipeline failed.\n\nCheck Jenkins console output.\nJob: ${env.JOB_NAME}",
+                body: """Pipeline failed.
+
+Check Jenkins console output.
+
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+""",
                 to: "${EMAIL}"
             )
         }
-
     }
 }
